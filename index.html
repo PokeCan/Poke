@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon BW Menu</title>
+    <style>
+  @font-face {
+    font-family: 'PokemonBW';
+    src: url('pokemon-b-w.otf') format('woff2');
+  }
+
+        :root {
+            --bg-color: #f0f0f0;
+            --panel-bg: #ffffff;
+            --select-color: #4db8ff;
+            --text-shadow: 1px 1px 0px #9c9c9c;
+        }
+
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'PokemonBW';
+        }
+
+        /* Container mimicking the DS Screen (512x384 typical Essentials res) */
+        #menu-container {
+            width: 512px;
+            height: 384px;
+            background: url('Graphics/Pictures/Menu/background.png') no-repeat center;
+            background-color: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #000;
+        }
+
+        /* Top Bar */
+        .header {
+            background: url('Graphics/Pictures/Menu/background3.png') no-repeat center;
+            width: 100%;
+            height: 32px;
+            color: white;
+            display: flex;
+            align-items: center;
+            
+            position: absolute;
+            top: 0;
+            z-index: 10;
+        }
+
+        #clock{
+            padding-left: 15px;
+        }
+
+        /* Menu Grid */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 50px 10px;
+            margin-top: 10px;
+        }
+
+        .panel {
+            background: url('Graphics/Pictures/Menu/panel.png') no-repeat center;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            position: relative;
+            transition: transform 0.1s;
+        }
+
+        .panel img {
+            width: 40px;
+            margin-right: 15px;
+        }
+
+        .panel span {
+            font-weight: bold;
+            font-size: 18px;
+            color: #ffffff;
+        }
+
+        /* Selection State */
+        .panel.active {
+            background: url('Graphics/Pictures/Menu/panel2.png') no-repeat center;
+            box-shadow: 0 0 10px var(--select-color);
+            transform: scale(1.02);
+        }
+
+                /* 1. Set the default transition for a smooth hover effect */
+        .panel img {
+            transition: content 0.2s;
+        }
+
+        /* 2. Define the 'active' and 'hover' swap for each specific index */
+
+        /* POKÉMON - Index 1 */
+        .panel[data-index="1"]:hover img, 
+        .panel[data-index="1"].active img {
+            content: url('Graphics/Pictures/Menu/party2.png');
+        }
+
+        /* POKÉDEX - Index 2 */
+        .panel[data-index="2"]:hover img, 
+        .panel[data-index="2"].active img {
+            content: url('Graphics/Pictures/Menu/pokedex2.png');
+        }
+
+        /* BAG - Index 3 */
+        .panel[data-index="3"]:hover img, 
+        .panel[data-index="3"].active img {
+            content: url('Graphics/Pictures/Menu/bag2.png');
+        }
+
+        /* TRAINER - Index 4 */
+        .panel[data-index="4"]:hover img, 
+        .panel[data-index="4"].active img {
+            content: url('Graphics/Pictures/Menu/trainercard2.png');
+        }
+
+        /* SAVE - Index 5 */
+        .panel[data-index="5"]:hover img, 
+        .panel[data-index="5"].active img {
+            content: url('Graphics/Pictures/Menu/save2.png');
+        }
+
+        /* OPTIONS - Index 6 */
+        .panel[data-index="6"]:hover img, 
+        .panel[data-index="6"].active img {
+            content: url('Graphics/Pictures/Menu/options2.png');
+        }
+
+        /* Footer / Exit Button */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 48px;
+            background: url('Graphics/Pictures/Menu/background3.png') no-repeat center;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        #exit-btn {
+            color: white;
+            margin-right: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #exit-btn img {
+            transition: content 0.1s;
+            cursor: pointer;
+        }
+
+        #exit-btn:hover img,
+        #exit-btn.active img {
+            content: url('Graphics/Pictures/Menu/exit2.png');
+        }
+
+        /* Feedback when a key is pressed */
+.panel:active, .panel.pressing {
+    transform: scale(0.95);
+    background: #bcdff1;
+
+}
+.panel a{
+    margin: 0;
+    padding: 0;
+        font-weight: bold;
+            font-size: 18px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            position: relative;
+            transition: transform 0.1s;
+}
+    </style>
+</head>
+<body>
+
+<div id="menu-container">
+    <div class="header"><span id="clock">00 : 00</span></div>
+
+    <div class="menu-grid">
+        <div class="panel active" data-index="1">
+            <a href="party/index.html" style="color: rgb(255, 255, 255); text-decoration: none;">
+            <img src="Graphics/Pictures/Menu/party.png" alt="">
+            <span>POKÉMON</span>
+            </a>
+        </div>
+        <div class="panel" data-index="2"> 
+            <a href="dex/index.html" style="color: rgb(255, 255, 255); text-decoration: none;">
+                <img src="Graphics/Pictures/Menu/pokedex.png" alt="Pokedex">
+                <span>POKÉDEX</span>
+            </a>
+        </div>
+        <div class="panel" data-index="3">
+            <img src="Graphics/Pictures/Menu/bag.png" alt="">
+            <span>BAG</span>
+        </div>
+        <div class="panel" data-index="4">
+            <img src="Graphics/Pictures/Menu/trainercard.png" alt="">
+            <span>TRAINER</span>
+        </div>
+        <div class="panel" data-index="5">
+            <img src="Graphics/Pictures/Menu/save.png" alt="">
+            <span>SAVE</span>
+        </div>
+        <div class="panel" data-index="6">
+            <img src="Graphics/Pictures/Menu/options.png" alt="">
+            <span>OPTIONS</span>
+        </div>
+    </div>
+    <div style="display:none;">
+    <img src="Graphics/Pictures/Menu/party2.png">
+    <img src="Graphics/Pictures/Menu/pokedex2.png">
+    <img src="Graphics/Pictures/Menu/bag2.png">
+    <img src="Graphics/Pictures/Menu/trainercard2.png">
+    <img src="Graphics/Pictures/Menu/save2.png">
+    <img src="Graphics/Pictures/Menu/options2.png">
+    </div>
+    <div class="footer">
+        <div id="exit-btn" data-index="7">
+            <img src="Graphics/Pictures/Menu/exit.png" alt="">
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Initialize variables once
+    let currentIndex = 0;
+    const panels = document.querySelectorAll('.panel');
+
+    // 2. Update Clock logic
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        const clockElement = document.getElementById('clock');
+        if (clockElement) {
+            clockElement.innerText = `${hours} : ${mins}`;
+        }
+    }
+    
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 3. Single Keyboard Event Listener
+    window.addEventListener('keydown', (e) => {
+        const key = e.key.toLowerCase(); 
+        
+        // Remove active class from the current panel before moving
+        panels[currentIndex].classList.remove('active');
+
+        // Navigation Logic (Arrows + WASD)
+        if (key === "arrowright" || key === "d") {
+            if (currentIndex < panels.length - 1) currentIndex++;
+        } 
+        else if (key === "arrowleft" || key === "a") {
+            if (currentIndex > 0) currentIndex--;
+        } 
+        else if (key === "arrowdown" || key === "s") {
+            if (currentIndex + 2 < panels.length) currentIndex += 2;
+        } 
+        else if (key === "arrowup" || key === "w") {
+            if (currentIndex - 2 >= 0) currentIndex -= 2;
+        } 
+        
+        // Action Logic (Enter, Space, or Z)
+        else if (key === "enter" || key === " " || key === "z") {
+            panels[currentIndex].classList.add('pressing');
+            setTimeout(() => {
+                panels[currentIndex].classList.remove('pressing');
+                alert("Opening: " + panels[currentIndex].innerText);
+            }, 100);
+        }
+
+        // Apply active class to the new current index
+        panels[currentIndex].classList.add('active');
+    });
+
+    // 4. Mouse Click Support
+    panels.forEach((panel, index) => {
+        panel.addEventListener('click', () => {
+            panels[currentIndex].classList.remove('active');
+            currentIndex = index;
+            panel.classList.add('active');
+            console.log("Clicked: " + panel.innerText);
+        });
+    });
+</script>
+
+
+</body>
+</html>

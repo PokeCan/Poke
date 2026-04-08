@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BW Pokédex</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    image-rendering: pixelated;
+    overflow: hidden;
+  }
+
+  /* ── 512×384 screen ── */
+  .dex-screen {
+    background: url(Graphics/Pictures/Menu/bg_list.png);
+    width: 512px;
+    height: 384px;
+    position: relative;
+    image-rendering: pixelated;
+    overflow: hidden;
+  }
+
+  /* Layer stack (bottom to top):
+     1. bg_list       - scrolling background
+     2. overlay_area  - left panel chrome (black area + orange stripes)
+     3. list_overlay  - right list chrome (header bar, row slots, scrollbar track)
+     4. entries       - pokedexSel / pokedexSel2 rows with text
+     5. sprites       - pokemon icons
+  */
+
+  .layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 512px; height: 384px;
+    image-rendering: pixelated;
+    pointer-events: none;
+  }
+
+  /* Scrolling bg */
+  .bg-scroll {
+    position: absolute;
+    top: 0; left: 0;
+    width: 512px; height: 384px;
+    animation: bgscroll 8s linear infinite;
+  }
+  @keyframes bgscroll {
+    from { background-position: 0 0; }
+    to   { background-position: 0 384px; }
+  }
+
+  /* list_overlay: header bar, row tracks, scrollbar rail */
+  .list-overlay {
+   background: url(Graphics/Pictures/Menu/list_overlay.png);
+  }
+
+  /* ── Left panel sprite ── */
+  /* Left panel spans ~0-220px, sprite centered at x=98 y=190 */
+  .preview-panel {
+    position: absolute;
+    top: 96px; left: 0;
+    width: 220px; height: 220px;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 5;
+    pointer-events: none;
+  }
+  #poke-sprite {
+    width: 144px; height: 144px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.8));
+    transition: opacity 0.12s;
+  }
+  #poke-sprite.fade { opacity: 0; }
+
+  /* ── Scrolling list rows ──
+     From pixel analysis:
+       header white bar: y=54–86
+       list rows start:  y=94, pitch=42px, 7 rows
+       row width:  right=0 to col=483 (pokedexSel is 303px wide, placed at x=209)
+       pokedexSel  x=209, each row y=94+i*42
+  */
+  .list-viewport {
+    position: absolute;
+    top: 94px; left: 209px;
+    width: 274px; height: 250px;   /* 7 * 42 = 294 */
+    overflow: hidden;
+    z-index: 4;
+  }
+  .scrolling-list {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    transition: transform 0.18s cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+  .entry {
+    width: 303px;
+    height: 42px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    background: url(Graphics/Pictures/Menu/pokedexSel.png);
+    }
+  .entry.active {
+  background: url(Graphics/Pictures/Menu/pokedexSel2.png); 
+  }
+
+  /* Icon area inside each row: the ( ) brackets sit at ~x=0-50 in the sprite */
+  .entry-icon-wrap {
+    position: absolute;
+    left: 18px; top: 3px;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .entry-icon {
+    width: 34px; height: 34px;
+    image-rendering: pixelated;
+    object-fit: contain;
+  }
+
+  /* Owned ball: icon_own.png (28×28) */
+  .own-icon {
+    position: absolute;
+    left: 42px; top: 7px;
+    width: 22px; height: 22px;
+    image-rendering: pixelated;
+  }
+
+  /* Dex number + name text */
+  .entry-num {
+    position: absolute;
+    left: 68px;
+    font-size: 8px;
+    text-shadow: 1px 1px #000;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .entry-name {
+    position: absolute;
+    left: 104px;
+    font-size: 8px;
+    color: #dedede;
+    text-shadow: 1px 1px #000;
+    letter-spacing: 0.3px;
+    text-transform: capitalize;
+    white-space: nowrap;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .entry.active .entry-num,
+  .entry.active .entry-name { color: #ffffff; }
+
+  /* ── Header active-entry display (white bar y=54-86) ──
+     Shows the selected entry number+name in the white strip */
+  .header-entry {
+    position: absolute;
+    top: 54px; left: 48px;
+    width: 240px; height: 580px;
+    display: flex; align-items: center; gap: 6px;
+    z-index: 6;
+    pointer-events: none;
+  }
+  .header-own {
+    width: 20px; height: 20px;
+    background: url("data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAcABwDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAABAcIBgD/xAAqEAABBAEDAgYCAwEAAAAAAAABAgMEBREABiESEwcUIjFBUXGBCEJhYv/EABgBAAMBAQAAAAAAAAAAAAAAAAMEBQIG/8QAIhEAAQMDBAMBAAAAAAAAAAAAAQIDBAARIQUSMUETFHFh/9oADAMBAAIRAxEAPwCfvB7w3ibrgS76+muRqaOtcdKYzoRIekJCFhtsLQUqJQo4TnJOPjTqrtr1sSvjRqbZe1JEVtpKQ5e1aVS1EADKykYJIAJ/66tC7cEWm2/tSsiUz0iNIo4du43CjBSzKUgJLpAwPYAFWOr250fdbtmRHY6WqWex1uJChLilJUDnIT6uTxx+9cw645JUVKJtfAqrpMbS3G1PT3SM2CRz9rN7u8LtsbkedLcY0N35QiOiKhuNWvPerpQkdBUpZWrgDkoSPkanS7rpFRczqmV0mRCkOR3enOOtCik4yAcZHyBqtLK9cdrkyjt26S7HHmWnVwsNocSCQsnPCR75HONJD+SMOLH3ZSzI8dpl2zomJ8rtoCe4+646VrOPcn7OT9k6b095xt7xKJIIxfq1K6lHixpO2I5vQRf5+UyvAzc7t/tGMO/BF3TKRHEdCz33q1ltv0oTkqUsrOAOEE/R00HbPbstLblsmHEfThSWbENodQfg9KjkYJI/IOogqbSzqJXmqmxmV8jp6e7GfU0vGQcZSQcZAP6GmLX+Nu4Y8FiPM29te3dabSjzVlCcffcwAMqWXOSeSf8AST86I4HIRJRYpJ4PVSyFNnHBqkbexamMhlkJjVccd+ZMkYRFcjJBC0IWD0lRScgHjHJ1JvjBuRe5d7SnEqjqhV5XAgKZOUqjNur7Zzkg8K/rgfQ128PEjdO5XClyaqshKZ7KoFc66zFUn1Zy31kHhXT+ABrH6PFaW4v2HSL2wB1Wm0lR3qr/2Q==") center / contain no-repeat;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+  }
+  .header-num {
+    font-size: 9px;
+    color: #444;
+    text-shadow: none;
+    letter-spacing: 0.5px;
+  }
+  .header-name {
+    font-size: 9px;
+    color: #333;
+    letter-spacing: 0.3px;
+    text-transform: capitalize;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* ── Scrollbar thumb (icon_slider.png 80×60, only ~cols 15-64 used)
+     Track: x=490-511, y=48-337 (289px tall) ── */
+  .scrollbar-thumb {
+    position: absolute;
+    left: 489px;
+    width: 22px;
+    z-index: 6;
+    image-rendering: pixelated;
+     height: 30px;
+    pointer-events: none;
+    transition: top 0.18s cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+</style>
+</head>
+<body>
+<div class="dex-screen">
+
+  <!-- Layer 1: scrolling bg -->
+  <div class="bg-scroll layer"></div>
+
+  <!-- Layer 2: left-panel / footer chrome -->
+  <div class="overlay-area layer"></div>
+
+  <!-- Layer 3: list chrome (header bar, row tracks, scrollbar rail) -->
+  <div class="list-overlay layer"></div>
+
+  <!-- Left panel: big sprite -->
+  <div class="preview-panel">
+    <img id="poke-sprite" class="fade" src="" alt="">
+  </div>
+
+  <!-- Header entry display (inside white bar) -->
+  <div class="header-entry">
+    <div class="header-own"></div>
+    <span class="header-num" id="header-num">001</span>
+    <span class="header-name" id="header-name">Bulbasaur</span>
+  </div>
+
+  <!-- Scrolling list -->
+  <div class="list-viewport">
+    <div class="scrolling-list" id="dex-list"></div>
+  </div>
+
+  <!-- Scrollbar thumb -->
+  <div class="scrollbar-thumb" id="scrollbar-thumb"></div>
+
+</div>
+
+<script>
+  const listEl      = document.getElementById('dex-list');
+  const spriteEl    = document.getElementById('poke-sprite');
+  const hNum        = document.getElementById('header-num');
+  const hName       = document.getElementById('header-name');
+  const thumb       = document.getElementById('scrollbar-thumb');
+
+  const ENTRY_H     = 42;
+  const VISIBLE     = 7;
+  const TRACK_TOP   = 48;
+  const TRACK_H     = 289;   // y=48 to y=337
+  const THUMB_H     = 30;
+
+  let pokemonData   = [];
+  let currentIndex  = 0;
+
+  // pokedexSel row has ( ) bracket icon area at left ~x=4-40
+  // icon_own is at x=42
+  // num at x=68, name at x=104
+  // These are baked into CSS above
+
+  async function fetchPokemon() {
+    const res  = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1525');
+    const data = await res.json();
+    pokemonData = data.results;
+    renderList();
+    updateSelection(false);
+  }
+
+  function renderList() {
+    listEl.innerHTML = pokemonData.map((p, i) => {
+      const num    = String(i+1).padStart(3,'0');
+      const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${i+1}.gif`;
+      return `<div class="entry" id="p-${i}" onclick="jumpTo(${i})">
+        <div class="entry-icon-wrap">
+          <img class="entry-icon" src="${iconUrl}"
+               onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i+1}.png'"
+               loading="lazy" alt="">
+        </div>
+        <div class="own-icon"></div>
+        <span class="entry-num">${num}</span>
+        <span class="entry-name">${p.name}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function updateSelection(animate=true) {
+    document.querySelectorAll('.entry').forEach(el => el.classList.remove('active'));
+    const active = document.getElementById(`p-${currentIndex}`);
+    if (!active) return;
+    active.classList.add('active');
+
+    // Scroll: keep active at top (row 0 visible)
+    const offset = currentIndex * ENTRY_H;
+    listEl.style.transition = animate ? '' : 'none';
+    listEl.style.transform  = `translateY(-${offset}px)`;
+
+    // Scrollbar thumb position
+    const pct       = pokemonData.length > 1 ? currentIndex / (pokemonData.length - 1) : 0;
+    const thumbTop  = TRACK_TOP + pct * (TRACK_H - THUMB_H);
+    thumb.style.top = Math.round(thumbTop) + 'px';
+
+    // Header
+    const id = currentIndex + 1;
+    hNum.textContent  = String(id).padStart(3,'0');
+    hName.textContent = pokemonData[currentIndex].name.replace(/-/g,' ');
+
+    // Big sprite
+    spriteEl.classList.add('fade');
+    const animUrl   = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`;
+    const staticUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+    const tmp = new Image();
+    tmp.onload  = () => { spriteEl.src = tmp.src; spriteEl.classList.remove('fade'); };
+    tmp.onerror = () => { spriteEl.src = staticUrl; spriteEl.classList.remove('fade'); };
+    tmp.src = animUrl;
+  }
+
+  function navigate(dir) {
+    currentIndex = Math.max(0, Math.min(pokemonData.length-1, currentIndex+dir));
+    updateSelection();
+  }
+  function jumpTo(i) { currentIndex = i; updateSelection(); }
+
+  window.addEventListener('keydown', e => {
+    if (e.key==='ArrowUp'    || e.key==='w') { e.preventDefault(); navigate(-1); }
+    if (e.key==='ArrowDown'  || e.key==='s') { e.preventDefault(); navigate(1);  }
+    if (e.key==='ArrowLeft'  || e.key==='a') navigate(-5);
+    if (e.key==='ArrowRight' || e.key==='d') navigate(5);
+  });
+  window.addEventListener('wheel', e => navigate(e.deltaY>0?1:-1), {passive:true});
+
+  fetchPokemon();
+</script>
+</body>
+</html>

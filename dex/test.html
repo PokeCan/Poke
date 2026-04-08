@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BW Pokédex</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+  }
+
+  /* ── Main screen container ── */
+  .dex-screen {
+    width: 512px;
+    height: 384px;
+    position: relative;
+    image-rendering: pixelated;
+    overflow: hidden;
+    background: url('Graphics/Pictures/Menu/bg_list.png') center/cover no-repeat;
+
+  }
+
+  /* ── Tiled dot-grid background (left panel) ── */
+  .bg-left {
+    position: absolute;
+    inset: 0;
+    width: 220px;
+    background-color: #3a5c3a;
+    background-image:
+      radial-gradient(circle, #2e4e2e 1px, transparent 1px);
+    background-size: 8px 8px;
+    border-right: 3px solid #1a3020;
+  }
+
+  /* ── Right panel background ── */
+  .bg-right {
+    position: absolute;
+    top: 0; right: 0;
+    width: 295px;
+    height: 340px;
+    background: #1e321e;
+  }
+
+  /* ══════════════════════════════
+     TOP HEADER BAR
+  ══════════════════════════════ */
+  .header-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 40px;
+    background: #111;
+    border-bottom: 3px solid #1a3020;
+    display: flex;
+    align-items: center;
+    z-index: 10;
+    overflow: hidden;
+  }
+
+  /* Small Pokémon icon in header (the active one) */
+  .header-icon-wrap {
+    width: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+  }
+  .header-icon {
+    width: 30px;
+    height: 30px;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 2px rgba(0,200,80,0.5));
+  }
+
+  /* Active entry name in header */
+  .header-entry {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 12px;
+    background: #1a3820;
+    height: 100%;
+  }
+  .header-ball {
+    width: 18px; height: 18px;
+    flex-shrink: 0;
+  }
+  .header-num {
+    font-size: 9px;
+    color: #7fff90;
+    text-shadow: 1px 1px #000;
+    letter-spacing: 0.5px;
+  }
+  .header-name {
+    font-size: 9px;
+    color: #7fff90;
+    text-shadow: 1px 1px #000;
+    letter-spacing: 0.5px;
+    text-transform: capitalize;
+  }
+
+  /* ══════════════════════════════
+     LEFT PANEL — big sprite
+  ══════════════════════════════ */
+  .preview-panel {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    width: 220px;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+
+  #poke-sprite {
+    width: 150px;
+    height: 150px;
+    image-rendering: pixelated;
+    filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.6));
+    transition: opacity 0.15s;
+  }
+  #poke-sprite.loading { opacity: 0; }
+
+  /* A:INFO label */
+  .info-label {
+    position: absolute;
+    bottom: 8px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .a-btn {
+    width: 18px; height: 18px;
+    background: #c0392b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 6px;
+    color: #fff;
+    font-weight: bold;
+    border: 2px solid #7f1f14;
+    flex-shrink: 0;
+  }
+  .info-text {
+    font-size: 7px;
+    color: #c8ffc8;
+    text-shadow: 1px 1px #000;
+    letter-spacing: 0.5px;
+  }
+
+  /* Green corner crosshair decorations */
+  .corner {
+    position: absolute;
+    width: 18px; height: 18px;
+    border-color: #50e070;
+    border-style: solid;
+    opacity: 0.6;
+  }
+  .corner.tl { top: 46px; left: 4px; border-width: 2px 0 0 2px; }
+  .corner.tr { top: 46px; left: 198px; border-width: 2px 2px 0 0; }
+  .corner.bl { top: 328px; left: 4px; border-width: 0 0 2px 2px; }
+  .corner.br { top: 328px; left: 198px; border-width: 0 2px 2px 0; }
+
+  /* ══════════════════════════════
+     RIGHT PANEL — scrolling list
+  ══════════════════════════════ */
+  .list-viewport {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    width: 295px;
+    height: 300px;
+    overflow: hidden;
+    z-index: 5;
+  }
+
+  .scrolling-list {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    transition: transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    padding-top: 0;
+  }
+
+  /* Each row */
+  .entry {
+    width: 100%;
+    height: 43px;
+    display: flex;
+    align-items: center;
+    padding-left: 12px;
+    gap: 0;
+    position: relative;
+    border-bottom: 1px solid #0e220e;
+    background: #243824;
+    cursor: pointer;
+    transition: background 0.08s;
+  }
+  .entry:nth-child(even) { background: #1e321e; }
+  .entry.active {
+    background: #2a5230 !important;
+    border-top: 1px solid #3a8040;
+    border-bottom: 1px solid #3a8040;
+  }
+  .entry.active .entry-num,
+  .entry.active .entry-name { color: #90ffaa; }
+
+  /* Small Pokemon icon (left of ball in each row) */
+  .entry-icon-wrap {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-right: 4px;
+  }
+  .entry-icon {
+    width: 36px;
+    height: 36px;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.7));
+  }
+
+  /* Red pokéball SVG badge */
+  .ball-icon {
+    width: 20px; height: 20px;
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
+
+  .entry-num {
+    font-size: 8px;
+    color: #80d890;
+    text-shadow: 1px 1px #000;
+    margin-right: 10px;
+    letter-spacing: 0.5px;
+    min-width: 28px;
+  }
+  .entry-name {
+    font-size: 8px;
+    color: #c8ffc8;
+    text-shadow: 1px 1px #000;
+    letter-spacing: 0.3px;
+    text-transform: capitalize;
+  }
+
+  /* ══════════════════════════════
+     BOTTOM BUTTON BAR
+  ══════════════════════════════ */
+  .footer {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 44px;
+    background: #1a1a1a;
+    border-top: 3px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    z-index: 10;
+    gap: 4px;
+  }
+
+  .footer-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: #2a2a2a;
+    border: 1.5px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .footer-btn:hover { background: #3a3a3a; }
+
+  .footer-btn .btn-icon {
+    width: 16px; height: 16px;
+    flex-shrink: 0;
+  }
+  .footer-btn .btn-label {
+    font-size: 6px;
+    color: #ddd;
+    text-shadow: 1px 1px #000;
+    letter-spacing: 0.5px;
+  }
+
+  .footer-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .nav-btn {
+    width: 28px; height: 28px;
+    background: #2a2a2a;
+    border: 1.5px solid #444;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 9px;
+    color: #bbb;
+    transition: background 0.1s;
+  }
+  .nav-btn:hover { background: #3a3a3a; }
+  .nav-btn.red-x { color: #ff4040; border-color: #aa2020; background: #2a1010; }
+  .nav-btn.blue-u { color: #4080ff; border-color: #2040aa; background: #101020; }
+  .nav-btn.white-sq { color: #ccc; }
+</style>
+</head>
+<body>
+
+<div class="dex-screen">
+
+  <!-- Backgrounds -->
+  <div class="bg-left"></div>
+  <div class="bg-right"></div>
+
+  <!-- Corner decorations -->
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <!-- Header bar (shows active entry) -->
+  <div class="header-bar">
+    <div class="header-icon-wrap">
+      <img class="header-icon" id="header-icon" src="" alt="">
+    </div>
+    <div class="header-entry">
+      <svg class="header-ball" viewBox="0 0 20 20">
+        <circle cx="10" cy="10" r="9" fill="#c0392b" stroke="#333" stroke-width="1.5"/>
+        <rect x="1" y="9" width="18" height="2" fill="#222"/>
+        <circle cx="10" cy="10" r="3.5" fill="#eee" stroke="#444" stroke-width="1.2"/>
+      </svg>
+      <span class="header-num" id="header-num">001</span>
+      <span class="header-name" id="header-name">Bulbasaur</span>
+    </div>
+  </div>
+
+  <!-- Left panel: big sprite -->
+  <div class="preview-panel">
+    <img id="poke-sprite" src="" alt="Pokemon sprite">
+    <div class="info-label">
+      <div class="a-btn">A</div>
+      <span class="info-text">:INFO</span>
+    </div>
+  </div>
+
+  <!-- Right panel: scrolling list -->
+  <div class="list-viewport">
+    <div class="scrolling-list" id="dex-list"></div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="footer">
+    <div class="footer-btn" onclick="sendPrompt && sendPrompt('Tell me about this Pokémon')">
+      <svg class="btn-icon" viewBox="0 0 16 16" fill="none">
+        <circle cx="7" cy="6" r="4" stroke="#aaa" stroke-width="1.5"/>
+        <line x1="10" y1="9" x2="15" y2="14" stroke="#aaa" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span class="btn-label">START</span>
+    </div>
+    <div class="footer-btn">
+      <svg class="btn-icon" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="3" width="12" height="10" rx="1" stroke="#aaa" stroke-width="1.5"/>
+        <line x1="5" y1="7" x2="11" y2="7" stroke="#aaa" stroke-width="1.2"/>
+        <line x1="5" y1="10" x2="9" y2="10" stroke="#aaa" stroke-width="1.2"/>
+      </svg>
+      <span class="btn-label">SELECT</span>
+    </div>
+    <div class="footer-nav">
+      <div class="nav-btn" id="btn-up" onclick="navigate(-1)">«</div>
+      <div class="nav-btn" id="btn-dn" onclick="navigate(1)">»</div>
+      <div class="nav-btn white-sq">▢</div>
+      <div class="nav-btn red-x" onclick="navigate(1)">✕</div>
+      <div class="nav-btn blue-u">⬡</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const listEl    = document.getElementById('dex-list');
+  const spriteEl  = document.getElementById('poke-sprite');
+  const headerIcon  = document.getElementById('header-icon');
+  const headerNum   = document.getElementById('header-num');
+  const headerName  = document.getElementById('header-name');
+
+  let pokemonData  = [];
+  let currentIndex = 0;
+  const ENTRY_H    = 43;
+  const VISIBLE    = 7; // rows visible
+  const ACTIVE_ROW = 0; // active row sits at top
+
+  // ── Pokéball SVG string for reuse ──
+  const ballSVG = `<svg class="ball-icon" viewBox="0 0 20 20">
+    <circle cx="10" cy="10" r="9" fill="#c0392b" stroke="#333" stroke-width="1.5"/>
+    <rect x="1" y="9" width="18" height="2" fill="#222"/>
+    <circle cx="10" cy="10" r="3.5" fill="#eee" stroke="#444" stroke-width="1.2"/>
+  </svg>`;
+
+  async function fetchPokemon() {
+    try {
+      const res  = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151&offset=0');
+      const data = await res.json();
+      pokemonData = data.results;
+      renderList();
+      updateSelection();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function renderList() {
+    listEl.innerHTML = pokemonData.map((p, i) => {
+      const num = String(i + 1).padStart(3, '0');
+      const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${i+1}.gif`;
+      return `<div class="entry" id="p-${i}" onclick="jumpTo(${i})">
+        <div class="entry-icon-wrap">
+          <img class="entry-icon" src="${iconUrl}" alt="" loading="lazy"
+               onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i+1}.png'">
+        </div>
+        ${ballSVG}
+        <span class="entry-num">${num}</span>
+        <span class="entry-name">${p.name}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function updateSelection() {
+    document.querySelectorAll('.entry').forEach(el => el.classList.remove('active'));
+    const active = document.getElementById(`p-${currentIndex}`);
+    if (!active) return;
+    active.classList.add('active');
+
+    // Scroll: keep active entry at top
+    const offset = currentIndex * ENTRY_H;
+    listEl.style.transform = `translateY(-${offset}px)`;
+
+    const id = currentIndex + 1;
+
+    // Big sprite (BW animated if available)
+    spriteEl.classList.add('loading');
+    const bigUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`;
+    const fallback = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+    const tmp = new Image();
+    tmp.onload  = () => { spriteEl.src = tmp.src; spriteEl.classList.remove('loading'); };
+    tmp.onerror = () => { spriteEl.src = fallback; spriteEl.classList.remove('loading'); };
+    tmp.src = bigUrl;
+
+    // Header
+    const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`;
+    headerIcon.src = iconUrl;
+    headerIcon.onerror = () => headerIcon.src = fallback;
+    headerNum.textContent  = String(id).padStart(3, '0');
+    headerName.textContent = pokemonData[currentIndex].name;
+  }
+
+  function navigate(dir) {
+    currentIndex = Math.max(0, Math.min(pokemonData.length - 1, currentIndex + dir));
+    updateSelection();
+  }
+
+  function jumpTo(i) {
+    currentIndex = i;
+    updateSelection();
+  }
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowUp'   || e.key === 'w') navigate(-1);
+    if (e.key === 'ArrowDown' || e.key === 's') navigate(1);
+    if (e.key === 'ArrowLeft' || e.key === 'a') navigate(-5);
+    if (e.key === 'ArrowRight'|| e.key === 'd') navigate(5);
+  });
+
+  fetchPokemon();
+</script>
+</body>
+</html>
