@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unova B2W2 Party UI</title>
+  <style>
+    @font-face {
+      font-family: 'PokemonBW';
+      src: url('pokemon-b-w.otf') format('woff2');
+    }
+
+    :root {
+      --text-color: #fff;
+      --font-family: 'PokemonBW', sans-serif;
+      --viewport-width: 512px;
+      --viewport-height: 384px;
+      --hp-green: #43ef21; /* Classic Pokemon Green */
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: var(--text-color);
+      overflow: hidden;
+      text-transform: uppercase;
+      image-rendering: pixelated;
+    }
+
+    .party-screen {
+      width: var(--viewport-width);
+      height: var(--viewport-height);
+      background: #0e141b url('Graphics/Pictures/Party/bg_B2W2.png') center/cover no-repeat;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 248px);
+      gap: 2px 4px;
+    }
+
+    .box {
+      width: 100%;
+      height: 90px; 
+      padding: 10px 15px 10px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-sizing: border-box;
+      position: relative;
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+    }
+
+    .box:nth-child(even) { transform: translateY(12px); }
+    .box.pokemon { background-image: url('Graphics/Pictures/Party/panel_round.png'); }
+    .box.pokemon.highlight { background-image: url('Graphics/Pictures/Party/panel_round_sel.png'); filter: brightness(1.1); }
+    .box.empty { background-image: url('Graphics/Pictures/Party/panel_blank.png'); }
+
+    .pokemon-sprite {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+    }
+
+    .top-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 18px;
+      text-shadow: 2px 2px #000;
+    }
+
+    /* --- HP BAR SYSTEM (GREEN BY DEFAULT) --- */
+    .hp-section {
+      position: relative;
+      width: 140px;
+      height: 14px;
+      margin-top: 4px;
+      /* We removed the back-image background here */
+    }
+
+    .hp-bar-fill {
+      position: absolute;
+      top: 5px;
+      left: 31px;
+      height: 6px;
+      z-index: 1;
+      transition: width 0.3s ease;
+      
+      /* Default Green State */
+      background-color: var(--hp-green); 
+      background-image: url('fullhpOverlay.png');
+      background-size: contain;
+      background-repeat: repeat-x; /* Repeats the texture across the width */
+      
+      /* Optional: subtle border to define it without the back-image */
+      box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+    }
+
+    .hp-text {
+      font-size: 14px;
+      text-align: right;
+      text-shadow: 1px 1px #000;
+      margin-top: 2px;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 85px;
+      background: url('Graphics/Pictures/Menu/background3.png') no-repeat center bottom;
+      background-size: 100% auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    #cancel-btn {
+      width: 30%;
+      height: 46px;
+      background: url('Graphics/Pictures/Party/icon_cancel.png') center/contain no-repeat;
+      margin-right: 1px;
+      margin-bottom: 12px;
+    }
+
+    #cancel-btn span {
+      display: flex;
+      font-size: 24px;
+      margin-top: 11px;
+      margin-left: 19px;
+    }
+
+    #cancel-btn.highlight {
+      background-image: url('Graphics/Pictures/Party/icon_cancel_sel.png');
+    }
+
+    .prompt {
+      background: white;
+      color: #333;
+      padding-left: 15px;
+      border: 4px solid #707070;
+      width: 70%; 
+      height: 60px;
+      display: flex;
+      align-items: center; 
+      font-size: 18px;
+      text-transform: none;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+
+<div class="party-screen">
+  <div class="grid" id="party-grid"></div>
+
+  <div class="footer">
+    <div class="prompt">Choose a Pokémon.</div>
+    <div id="cancel-btn" onclick="window.location.href='../index.html'">
+      <span>CANCEL</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const partyMembers = [
+    { id: 34,  name: 'NIDOKING',  lv: 50, chp: 205, mhp: 205 },
+    { id: 2,   name: 'IVYSAUR',   lv: 50, chp: 134, mhp: 134 },
+    { id: 130, name: 'GYARADOS',  lv: 20, chp: 68,  mhp: 68 },
+    { id: 448, name: 'LUCARIO',   lv: 52, chp: 150, mhp: 150 },
+    { id: 637, name: 'VOLCARONA', lv: 70, chp: 210, mhp: 230 },
+    { id: 571, name: 'ZOROARK',   lv: 45, chp: 110, mhp: 125 }
+  ];
+
+  const grid = document.getElementById('party-grid');
+  const promptBox = document.querySelector('.prompt');
+  let elements = [];
+  let currentIndex = 0;
+
+  function initParty() {
+    grid.innerHTML = '';
+    partyMembers.forEach((p) => {
+      const box = document.createElement('div');
+      box.className = 'box pokemon';
+      
+      const pct = p.chp / p.mhp;
+      const barWidth = Math.floor(pct * 95); 
+
+      const spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${p.id}.gif`;
+      const fallbackUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`;
+
+      box.innerHTML = `
+        <img src="${spriteUrl}" class="pokemon-sprite" onerror="this.src='${fallbackUrl}'">
+        <div class="top-info">
+          <span>${p.name}</span>
+          <span><img src="Graphics/Pictures/Party/overlay_lv.png" style="height:10px"> ${p.lv}</span>
+        </div>
+        <div class="hp-section">
+          <div class="hp-bar-fill" style="width: ${barWidth}px;"></div>
+        </div>
+        <div class="hp-text">${p.chp} / ${p.mhp}</div>
+      `;
+      grid.appendChild(box);
+    });
+
+    for(let i = partyMembers.length; i < 6; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'box empty';
+      grid.appendChild(empty);
+    }
+
+    elements = [...document.querySelectorAll('.box'), document.getElementById('cancel-btn')];
+    updateSelection();
+  }
+
+  function updateSelection() {
+    elements.forEach(el => el.classList.remove('highlight'));
+    elements[currentIndex].classList.add('highlight');
+    const name = partyMembers[currentIndex]?.name;
+    promptBox.textContent = name ? `What should ${name} do?` : "Choose a Pokémon.";
+  }
+
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+    if (key === 'w' || key === 'arrowup') currentIndex = currentIndex === 6 ? 4 : (currentIndex - 2 + elements.length) % elements.length;
+    else if (key === 's' || key === 'arrowdown') currentIndex = (currentIndex >= 4 && currentIndex < 6) ? 6 : (currentIndex === 6) ? 0 : (currentIndex + 2) % elements.length;
+    else if (key === 'a' || key === 'arrowleft' || key === 'd' || key === 'arrowright') if (currentIndex < 6) currentIndex = (currentIndex % 2 === 0) ? currentIndex + 1 : currentIndex - 1;
+
+    if (elements[currentIndex].classList.contains('empty')) currentIndex = 6;
+    updateSelection();
+  });
+
+  initParty();
+</script>
+</body>
+</html>
