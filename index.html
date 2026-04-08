@@ -299,6 +299,14 @@
             console.log("Clicked: " + panel.innerText);
         });
     });
+    function scaleScreen() {
+  const scaleX = window.innerWidth / 512;
+  const scaleY = window.innerHeight / 384;
+  const scale = Math.min(scaleX, scaleY, 1);
+  screen.style.transform = `scale(${scale})`;
+}
+scaleScreen();
+window.addEventListener('resize', scaleScreen);
 </script>
 
 
