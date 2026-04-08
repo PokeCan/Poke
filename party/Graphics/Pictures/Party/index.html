@@ -1,252 +1,314 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Unova B2W2 Party UI</title>
-  <style>
-    @font-face {
-      font-family: 'PokemonBW';
-      src: url('pokemon-b-w.otf') format('woff2');
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon BW Menu</title>
+    <style>
+  @font-face {
+    font-family: 'PokemonBW';
+    src: url('pokemon-b-w.otf') format('woff2');
+  }
 
-    :root {
-      --text-color: #fff;
-      --font-family: 'PokemonBW', sans-serif;
-      --viewport-width: 512px;
-      --viewport-height: 384px;
-      --hp-green: #43ef21; /* Classic Pokemon Green */
-    }
+        :root {
+            --bg-color: #f0f0f0;
+            --panel-bg: #ffffff;
+            --select-color: #4db8ff;
+            --text-shadow: 1px 1px 0px #9c9c9c;
+        }
 
-    body {
-      font-family: var(--font-family);
-      background: #1a1a1a;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      color: var(--text-color);
-      overflow: hidden;
-      text-transform: uppercase;
-      image-rendering: pixelated;
-    }
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'PokemonBW';
+        }
 
-    .party-screen {
-      width: var(--viewport-width);
-      height: var(--viewport-height);
-      background: #0e141b url('Graphics/Pictures/Party/bg_B2W2.png') center/cover no-repeat;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 10px;
-    }
+        /* Container mimicking the DS Screen (512x384 typical Essentials res) */
+        #menu-container {
+            width: 512px;
+            height: 384px;
+            background: url('Graphics/Pictures/Menu/background.png') no-repeat center;
+            background-color: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #000;
+        }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 248px);
-      gap: 2px 4px;
-    }
+        /* Top Bar */
+        .header {
+            background: url('Graphics/Pictures/Menu/background3.png') no-repeat center;
+            width: 100%;
+            height: 32px;
+            color: white;
+            display: flex;
+            align-items: center;
+            
+            position: absolute;
+            top: 0;
+            z-index: 10;
+        }
 
-    .box {
-      width: 100%;
-      height: 90px; 
-      padding: 10px 15px 10px 60px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      box-sizing: border-box;
-      position: relative;
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
-    }
+        #clock{
+            padding-left: 15px;
+        }
 
-    .box:nth-child(even) { transform: translateY(12px); }
-    .box.pokemon { background-image: url('Graphics/Pictures/Party/panel_round.png'); }
-    .box.pokemon.highlight { background-image: url('Graphics/Pictures/Party/panel_round_sel.png'); filter: brightness(1.1); }
-    .box.empty { background-image: url('Graphics/Pictures/Party/panel_blank.png'); }
+        /* Menu Grid */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 50px 10px;
+            margin-top: 10px;
+        }
 
-    .pokemon-sprite {
-      position: absolute;
-      left: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 64px;
-      height: 64px;
-      object-fit: contain;
-    }
+        .panel {
+            background: url('Graphics/Pictures/Menu/panel.png') no-repeat center;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            position: relative;
+            transition: transform 0.1s;
+        }
 
-    .top-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-size: 18px;
-      text-shadow: 2px 2px #000;
-    }
+        .panel img {
+            width: 40px;
+            margin-right: 15px;
+        }
 
-    /* --- HP BAR SYSTEM (GREEN BY DEFAULT) --- */
-    .hp-section {
-      position: relative;
-      width: 140px;
-      height: 14px;
-      margin-top: 4px;
-      /* We removed the back-image background here */
-    }
+        .panel span {
+            font-weight: bold;
+            font-size: 18px;
+            color: #ffffff;
+        }
 
-    .hp-bar-fill {
-      position: absolute;
-      top: 5px;
-      left: 31px;
-      height: 6px;
-      z-index: 1;
-      transition: width 0.3s ease;
-      
-      /* Default Green State */
-      background-color: var(--hp-green); 
-      background-image: url('fullhpOverlay.png');
-      background-size: contain;
-      background-repeat: repeat-x; /* Repeats the texture across the width */
-      
-      /* Optional: subtle border to define it without the back-image */
-      box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
-    }
+        /* Selection State */
+        .panel.active {
+            background: url('Graphics/Pictures/Menu/panel2.png') no-repeat center;
+            box-shadow: 0 0 10px var(--select-color);
+            transform: scale(1.02);
+        }
 
-    .hp-text {
-      font-size: 14px;
-      text-align: right;
-      text-shadow: 1px 1px #000;
-      margin-top: 2px;
-    }
+                /* 1. Set the default transition for a smooth hover effect */
+        .panel img {
+            transition: content 0.2s;
+        }
 
-    .footer {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      height: 85px;
-      background: url('Graphics/Pictures/Menu/background3.png') no-repeat center bottom;
-      background-size: 100% auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-    }
+        /* 2. Define the 'active' and 'hover' swap for each specific index */
 
-    #cancel-btn {
-      width: 30%;
-      height: 46px;
-      background: url('Graphics/Pictures/Party/icon_cancel.png') center/contain no-repeat;
-      margin-right: 1px;
-      margin-bottom: 12px;
-    }
+        /* POKÉMON - Index 1 */
+        .panel[data-index="1"]:hover img, 
+        .panel[data-index="1"].active img {
+            content: url('Graphics/Pictures/Menu/party2.png');
+        }
 
-    #cancel-btn span {
-      display: flex;
-      font-size: 24px;
-      margin-top: 11px;
-      margin-left: 19px;
-    }
+        /* POKÉDEX - Index 2 */
+        .panel[data-index="2"]:hover img, 
+        .panel[data-index="2"].active img {
+            content: url('Graphics/Pictures/Menu/pokedex2.png');
+        }
 
-    #cancel-btn.highlight {
-      background-image: url('Graphics/Pictures/Party/icon_cancel_sel.png');
-    }
+        /* BAG - Index 3 */
+        .panel[data-index="3"]:hover img, 
+        .panel[data-index="3"].active img {
+            content: url('Graphics/Pictures/Menu/bag2.png');
+        }
 
-    .prompt {
-      background: white;
-      color: #333;
-      padding-left: 15px;
-      border: 4px solid #707070;
-      width: 70%; 
-      height: 60px;
-      display: flex;
-      align-items: center; 
-      font-size: 18px;
-      text-transform: none;
-      box-sizing: border-box;
-    }
-  </style>
+        /* TRAINER - Index 4 */
+        .panel[data-index="4"]:hover img, 
+        .panel[data-index="4"].active img {
+            content: url('Graphics/Pictures/Menu/trainercard2.png');
+        }
+
+        /* SAVE - Index 5 */
+        .panel[data-index="5"]:hover img, 
+        .panel[data-index="5"].active img {
+            content: url('Graphics/Pictures/Menu/save2.png');
+        }
+
+        /* OPTIONS - Index 6 */
+        .panel[data-index="6"]:hover img, 
+        .panel[data-index="6"].active img {
+            content: url('Graphics/Pictures/Menu/options2.png');
+        }
+
+        /* Footer / Exit Button */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 48px;
+            background: url('Graphics/Pictures/Menu/background3.png') no-repeat center;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        #exit-btn {
+            color: white;
+            margin-right: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #exit-btn img {
+            transition: content 0.1s;
+            cursor: pointer;
+        }
+
+        #exit-btn:hover img,
+        #exit-btn.active img {
+            content: url('Graphics/Pictures/Menu/exit2.png');
+        }
+
+        /* Feedback when a key is pressed */
+.panel:active, .panel.pressing {
+    transform: scale(0.95);
+    background: #bcdff1;
+
+}
+.panel a{
+    margin: 0;
+    padding: 0;
+        font-weight: bold;
+            font-size: 18px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            position: relative;
+            transition: transform 0.1s;
+}
+    </style>
 </head>
 <body>
 
-<div class="party-screen">
-  <div class="grid" id="party-grid"></div>
+<div id="menu-container">
+    <div class="header"><span id="clock">00 : 00</span></div>
 
-  <div class="footer">
-    <div class="prompt">Choose a Pokémon.</div>
-    <div id="cancel-btn" onclick="window.location.href='../index.html'">
-      <span>CANCEL</span>
+    <div class="menu-grid">
+        <div class="panel active" data-index="1">
+            <a href="party/index.html" style="color: rgb(255, 255, 255); text-decoration: none;">
+            <img src="Graphics/Pictures/Menu/party.png" alt="">
+            <span>POKÉMON</span>
+            </a>
+        </div>
+        <div class="panel" data-index="2"> 
+            <a href="dex/index.html" style="color: rgb(255, 255, 255); text-decoration: none;">
+                <img src="Graphics/Pictures/Menu/pokedex.png" alt="Pokedex">
+                <span>POKÉDEX</span>
+            </a>
+        </div>
+        <div class="panel" data-index="3">
+            <img src="Graphics/Pictures/Menu/bag.png" alt="">
+            <span>BAG</span>
+        </div>
+        <div class="panel" data-index="4">
+            <img src="Graphics/Pictures/Menu/trainercard.png" alt="">
+            <span>TRAINER</span>
+        </div>
+        <div class="panel" data-index="5">
+            <img src="Graphics/Pictures/Menu/save.png" alt="">
+            <span>SAVE</span>
+        </div>
+        <div class="panel" data-index="6">
+            <img src="Graphics/Pictures/Menu/options.png" alt="">
+            <span>OPTIONS</span>
+        </div>
     </div>
-  </div>
+    <div style="display:none;">
+    <img src="Graphics/Pictures/Menu/party2.png">
+    <img src="Graphics/Pictures/Menu/pokedex2.png">
+    <img src="Graphics/Pictures/Menu/bag2.png">
+    <img src="Graphics/Pictures/Menu/trainercard2.png">
+    <img src="Graphics/Pictures/Menu/save2.png">
+    <img src="Graphics/Pictures/Menu/options2.png">
+    </div>
+    <div class="footer">
+        <div id="exit-btn" data-index="7">
+            <img src="Graphics/Pictures/Menu/exit.png" alt="">
+        </div>
+    </div>
 </div>
 
 <script>
-  const partyMembers = [
-    { id: 34,  name: 'NIDOKING',  lv: 50, chp: 205, mhp: 205 },
-    { id: 2,   name: 'IVYSAUR',   lv: 50, chp: 134, mhp: 134 },
-    { id: 130, name: 'GYARADOS',  lv: 20, chp: 68,  mhp: 68 },
-    { id: 448, name: 'LUCARIO',   lv: 52, chp: 150, mhp: 150 },
-    { id: 637, name: 'VOLCARONA', lv: 70, chp: 210, mhp: 230 },
-    { id: 571, name: 'ZOROARK',   lv: 45, chp: 110, mhp: 125 }
-  ];
+    // 1. Initialize variables once
+    let currentIndex = 0;
+    const panels = document.querySelectorAll('.panel');
 
-  const grid = document.getElementById('party-grid');
-  const promptBox = document.querySelector('.prompt');
-  let elements = [];
-  let currentIndex = 0;
+    // 2. Update Clock logic
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        const clockElement = document.getElementById('clock');
+        if (clockElement) {
+            clockElement.innerText = `${hours} : ${mins}`;
+        }
+    }
+    
+    setInterval(updateClock, 1000);
+    updateClock();
 
-  function initParty() {
-    grid.innerHTML = '';
-    partyMembers.forEach((p) => {
-      const box = document.createElement('div');
-      box.className = 'box pokemon';
-      
-      const pct = p.chp / p.mhp;
-      const barWidth = Math.floor(pct * 95); 
+    // 3. Single Keyboard Event Listener
+    window.addEventListener('keydown', (e) => {
+        const key = e.key.toLowerCase(); 
+        
+        // Remove active class from the current panel before moving
+        panels[currentIndex].classList.remove('active');
 
-      const spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${p.id}.gif`;
-      const fallbackUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`;
+        // Navigation Logic (Arrows + WASD)
+        if (key === "arrowright" || key === "d") {
+            if (currentIndex < panels.length - 1) currentIndex++;
+        } 
+        else if (key === "arrowleft" || key === "a") {
+            if (currentIndex > 0) currentIndex--;
+        } 
+        else if (key === "arrowdown" || key === "s") {
+            if (currentIndex + 2 < panels.length) currentIndex += 2;
+        } 
+        else if (key === "arrowup" || key === "w") {
+            if (currentIndex - 2 >= 0) currentIndex -= 2;
+        } 
+        
+        // Action Logic (Enter, Space, or Z)
+        else if (key === "enter" || key === " " || key === "z") {
+            panels[currentIndex].classList.add('pressing');
+            setTimeout(() => {
+                panels[currentIndex].classList.remove('pressing');
+                alert("Opening: " + panels[currentIndex].innerText);
+            }, 100);
+        }
 
-      box.innerHTML = `
-        <img src="${spriteUrl}" class="pokemon-sprite" onerror="this.src='${fallbackUrl}'">
-        <div class="top-info">
-          <span>${p.name}</span>
-          <span><img src="Graphics/Pictures/Party/overlay_lv.png" style="height:10px"> ${p.lv}</span>
-        </div>
-        <div class="hp-section">
-          <div class="hp-bar-fill" style="width: ${barWidth}px;"></div>
-        </div>
-        <div class="hp-text">${p.chp} / ${p.mhp}</div>
-      `;
-      grid.appendChild(box);
+        // Apply active class to the new current index
+        panels[currentIndex].classList.add('active');
     });
 
-    for(let i = partyMembers.length; i < 6; i++) {
-      const empty = document.createElement('div');
-      empty.className = 'box empty';
-      grid.appendChild(empty);
-    }
-
-    elements = [...document.querySelectorAll('.box'), document.getElementById('cancel-btn')];
-    updateSelection();
-  }
-
-  function updateSelection() {
-    elements.forEach(el => el.classList.remove('highlight'));
-    elements[currentIndex].classList.add('highlight');
-    const name = partyMembers[currentIndex]?.name;
-    promptBox.textContent = name ? `What should ${name} do?` : "Choose a Pokémon.";
-  }
-
-  window.addEventListener('keydown', (e) => {
-    const key = e.key.toLowerCase();
-    if (key === 'w' || key === 'arrowup') currentIndex = currentIndex === 6 ? 4 : (currentIndex - 2 + elements.length) % elements.length;
-    else if (key === 's' || key === 'arrowdown') currentIndex = (currentIndex >= 4 && currentIndex < 6) ? 6 : (currentIndex === 6) ? 0 : (currentIndex + 2) % elements.length;
-    else if (key === 'a' || key === 'arrowleft' || key === 'd' || key === 'arrowright') if (currentIndex < 6) currentIndex = (currentIndex % 2 === 0) ? currentIndex + 1 : currentIndex - 1;
-
-    if (elements[currentIndex].classList.contains('empty')) currentIndex = 6;
-    updateSelection();
-  });
-
-  initParty();
+    // 4. Mouse Click Support
+    panels.forEach((panel, index) => {
+        panel.addEventListener('click', () => {
+            panels[currentIndex].classList.remove('active');
+            currentIndex = index;
+            panel.classList.add('active');
+            console.log("Clicked: " + panel.innerText);
+        });
+    });
+    function scaleScreen() {
+  const scaleX = window.innerWidth / 512;
+  const scaleY = window.innerHeight / 384;
+  const scale = Math.min(scaleX, scaleY, 1);
+  screen.style.transform = `scale(${scale})`;
+}
+scaleScreen();
+window.addEventListener('resize', scaleScreen);
 </script>
+
+
 </body>
 </html>
