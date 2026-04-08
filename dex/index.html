@@ -261,34 +261,28 @@
 </div>
 
 <script>
-  const listEl      = document.getElementById('dex-list');
-const spriteEl    = document.getElementById('poke-sprite');
-const hNum        = document.getElementById('header-num');
-const hName       = document.getElementById('header-name');
-const thumb       = document.getElementById('scrollbar-thumb');
-const escButton   = document.querySelector('.esc');
+ const listEl = document.getElementById('dex-list');
+const spriteEl = document.getElementById('poke-sprite');
+const hNum = document.getElementById('header-num');
+const hName = document.getElementById('header-name');
+const thumb = document.getElementById('scrollbar-thumb');
+const escButton = document.querySelector('.esc');
+const dexScreen = document.querySelector('.dex-screen');
+const viewport = document.querySelector('.list-viewport');
 
-const ENTRY_H     = 42;
-const TRACK_TOP   = 48;
-const TRACK_H     = 289;
-const THUMB_H     = 30;
+const ENTRY_H = 42;
+const TRACK_TOP = 48;
+const TRACK_H = 289;
+const THUMB_H = 30;
 
-let pokemonData   = [];
-let currentIndex  = 0;
+let pokemonData = [];
+let currentIndex = 0;
 
-function handleExit() {
-    console.log("Exiting Pokedex...");
-}
-
-// Navigate to the Info page
-function selectPokemon(index) {
-    const pokemonId = index + 1;
-    window.location.href = `dex_info.html?id=${pokemonId}`;
-}
+// --- Initialization ---
 
 async function fetchPokemon() {
     try {
-        const res  = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
+        const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
         const data = await res.json();
         pokemonData = data.results;
         renderList();
@@ -300,67 +294,103 @@ async function fetchPokemon() {
 
 function renderList() {
     listEl.innerHTML = pokemonData.map((p, i) => {
-        const num    = String(i+1).padStart(3,'0');
-        const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${i+1}.gif`;
-        return `<div class="entry" id="p-${i}" onclick="selectPokemon(${i})">
-            <div class="entry-icon-wrap">
-                <img class="entry-icon" src="${iconUrl}"
-                     onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i+1}.png'"
-                     loading="lazy" alt="">
-            </div>
-            <div class="own-icon"></div>
-            <span class="entry-num">${num}</span>
-            <span class="entry-name">${p.name}</span>
-        </div>`;
+        const num = String(i + 1).padStart(3, '0');
+        const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${i + 1}.gif`;
+        return `
+            <div class="entry" id="p-${i}" onclick="selectPokemon(${i})">
+                <div class="entry-icon-wrap">
+                    <img class="entry-icon" src="${iconUrl}" 
+                         onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i + 1}.png'" 
+                         loading="lazy" alt="">
+                </div>
+                <div class="own-icon"></div>
+                <span class="entry-num">${num}</span>
+                <span class="entry-name">${p.name}</span>
+            </div>`;
     }).join('');
 }
 
-function updateSelection(animate=true) {
+// --- Core Logic ---
+
+function updateSelection(animate = true) {
     document.querySelectorAll('.entry').forEach(el => el.classList.remove('active'));
     const active = document.getElementById(`p-${currentIndex}`);
     if (!active) return;
     active.classList.add('active');
 
+    // Scroll the list
     const offset = currentIndex * ENTRY_H;
     listEl.style.transition = animate ? 'transform 0.2s ease-out' : 'none';
-    listEl.style.transform  = `translateY(-${offset}px)`;
+    listEl.style.transform = `translateY(-${offset}px)`;
 
-    const pct       = pokemonData.length > 1 ? currentIndex / (pokemonData.length - 1) : 0;
-    const thumbTop  = TRACK_TOP + pct * (TRACK_H - THUMB_H);
+    // Update Scrollbar
+    const pct = pokemonData.length > 1 ? currentIndex / (pokemonData.length - 1) : 0;
+    const thumbTop = TRACK_TOP + pct * (TRACK_H - THUMB_H);
     thumb.style.top = Math.round(thumbTop) + 'px';
 
+    // Update Header Text
     const id = currentIndex + 1;
-    hNum.textContent  = String(id).padStart(3,'0');
-    hName.textContent = pokemonData[currentIndex].name.replace(/-/g,' ');
+    hNum.textContent = String(id).padStart(3, '0');
+    hName.textContent = pokemonData[currentIndex].name.replace(/-/g, ' ');
 
+    // Update Sprite with Fade effect
     spriteEl.classList.add('fade');
-    const animUrl   = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`;
+    const animUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`;
     const staticUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
-    
+
     const tmp = new Image();
-    tmp.onload  = () => { spriteEl.src = tmp.src; spriteEl.classList.remove('fade'); };
+    tmp.onload = () => { spriteEl.src = tmp.src; spriteEl.classList.remove('fade'); };
     tmp.onerror = () => { spriteEl.src = staticUrl; spriteEl.classList.remove('fade'); };
     tmp.src = animUrl;
 }
 
 function navigate(dir) {
-    currentIndex = Math.max(0, Math.min(pokemonData.length-1, currentIndex+dir));
+    currentIndex = Math.max(0, Math.min(pokemonData.length - 1, currentIndex + dir));
     updateSelection();
 }
 
-escButton.addEventListener('mousedown', () => escButton.classList.add('esc2'));
-escButton.addEventListener('mouseup', () => {
-    escButton.classList.remove('esc2');
-    handleExit();
-});
+function selectPokemon(index) {
+    const pokemonId = index + 1;
+    window.location.href = `dex_info.html?id=${pokemonId}`;
+}
 
+function handleExit() {
+    console.log("Exiting Pokedex...");
+    window.location.href = "../index.html";
+}
+
+// --- Input Listeners ---
+
+// Touch Support
+let touchStartY = 0;
+const touchThreshold = 25; 
+
+viewport.addEventListener('touchstart', (e) => {
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+viewport.addEventListener('touchmove', (e) => {
+    const touchY = e.touches[0].clientY;
+    const diff = touchStartY - touchY;
+
+    if (Math.abs(diff) > touchThreshold) {
+        navigate(diff > 0 ? 1 : -1);
+        touchStartY = touchY; // Reset for continuous scroll
+    }
+}, { passive: true });
+
+// Mouse Wheel
+window.addEventListener('wheel', e => {
+    navigate(e.deltaY > 0 ? 1 : -1);
+}, { passive: true });
+
+// Keyboard
 window.addEventListener('keydown', e => {
-    if (e.key === 'ArrowUp'    || e.key === 'w') { e.preventDefault(); navigate(-1); }
-    if (e.key === 'ArrowDown'  || e.key === 's') { e.preventDefault(); navigate(1);  }
-    if (e.key === 'ArrowLeft'  || e.key === 'a') navigate(-5);
+    if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); navigate(-1); }
+    if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); navigate(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'a') navigate(-5);
     if (e.key === 'ArrowRight' || e.key === 'd') navigate(5);
-    if (e.key === 'Enter'      || e.key === ' ') selectPokemon(currentIndex);
-
+    if (e.key === 'Enter' || e.key === ' ') selectPokemon(currentIndex);
     if (e.key === 'Escape') {
         e.preventDefault();
         escButton.classList.add('esc2');
@@ -374,10 +404,24 @@ window.addEventListener('keyup', e => {
     }
 });
 
-window.addEventListener('wheel', e => navigate(e.deltaY > 0 ? 1 : -1), { passive: true });
+// Exit Button UI
+escButton.addEventListener('mousedown', () => escButton.classList.add('esc2'));
+escButton.addEventListener('mouseup', () => escButton.classList.remove('esc2'));
 
+// --- Responsiveness ---
+
+function scaleScreen() {
+    const scaleX = window.innerWidth / 512;
+    const scaleY = window.innerHeight / 384;
+    const scale = Math.min(scaleX, scaleY, 1);
+    dexScreen.style.transform = `scale(${scale})`;
+}
+
+window.addEventListener('resize', scaleScreen);
+
+// --- Boot ---
 fetchPokemon();
-
+scaleScreen();
 </script>
 </body>
 </html>
