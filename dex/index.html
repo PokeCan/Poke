@@ -209,7 +209,7 @@ let pokemonData = [];
 let currentIndex = 0;
 
 async function fetchPokemon() {
-    const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
+    const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025');
     const data = await res.json();
     pokemonData = data.results;
     renderList();
