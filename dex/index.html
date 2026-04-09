@@ -117,11 +117,18 @@
     position: absolute; left: 68px;
     font-size: 8px; text-shadow: 1px 1px #000;
   }
-  .entry-name {
-    position: absolute; left: 104px;
-    font-size: 8px; color: #dedede;
+   .entry-name {
+    position: absolute;
+    left: 104px;
+    font-size: 8px;
+    color: #dedede;
     text-shadow: 1px 1px #000;
+    letter-spacing: 0.3px;
     text-transform: capitalize;
+    white-space: nowrap;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* Header Display */
