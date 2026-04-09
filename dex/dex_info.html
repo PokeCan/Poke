@@ -115,11 +115,38 @@
     gap: 4px; z-index: 4;
   }
   .type-badge {
-    padding: 4px 6px; font-size: 6px;
-    border-radius: 2px; color: #fff;
-    text-transform: uppercase;
+    height: 20px; 
+    padding: 0 8px;
+    font-size: 7px;
+    display: flex; 
+    align-items: center;
+    border-radius: 2px;
+    color: #fff;
+    text-shadow: 1px 1px rgba(0,0,0,0.5);
+    text-transform: capitalize;
+    letter-spacing: 0.3px;
+    border: 1px solid rgba(0,0,0,0.25);
   }
 
+  /* Your Specific Type Colors */
+  .t-normal   { background:#A8A878; color:#333; }
+  .t-fire     { background:#F08030; }
+  .t-water    { background:#6890F0; }
+  .t-grass    { background:#78C850; }
+  .t-electric { background:#F8D030; color:#333; }
+  .t-ice      { background:#98D8D8; color:#333; }
+  .t-fighting { background:#C03028; }
+  .t-poison   { background:#A040A0; }
+  .t-ground   { background:#E0C068; color:#333; }
+  .t-flying   { background:#A890F0; }
+  .t-psychic  { background:#F85888; }
+  .t-bug      { background:#A8B820; }
+  .t-rock     { background:#B8A038; }
+  .t-ghost    { background:#705898; }
+  .t-dragon   { background:#7038F8; }
+  .t-dark     { background:#705848; }
+  .t-steel    { background:#B8B8D0; color:#333; }
+  .t-fairy    { background:#EE99AC; }
   .row-ht, .row-wt {
     position: absolute; left: 260px; right: 20px;
     height: 22px; display: flex; align-items: center;
