@@ -292,8 +292,8 @@ async function load(id) {
 
 function navigate(dir) {
     currentId += dir;
-    if (currentId < 1) currentId = 151;
-    if (currentId > 151) currentId = 1;
+    if (currentId < 1) currentId = 1025;
+    if (currentId > 1025) currentId = 1;
     load(currentId);
 }
 
