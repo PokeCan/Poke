@@ -269,8 +269,8 @@ async function load(id) {
         catEl.textContent = category ? category.genus : "??? Pokémon";
 
         typesEl.innerHTML = data.types.map(t => 
-            `<div class="type-badge t-${t.type.name}" style="background-color: var(--type-${t.type.name}, #777)">${t.type.name}</div>`
-        ).join('');
+              `<div class="type-badge t-${t.type.name}">${t.type.name}</div>`
+          ).join('');
 
         htEl.textContent = (data.height / 10).toFixed(1) + ' m';
         wtEl.textContent = (data.weight / 10).toFixed(1) + ' kg';
@@ -284,6 +284,8 @@ async function load(id) {
         currentId = id;
     } catch (err) { console.error(err); }
 }
+
+  
 
 function navigate(dir) {
     currentId += dir;
