@@ -87,14 +87,14 @@
   /* Right Data Panel */
   .row-name {
     position: absolute;
-    top: 18px; left: 256px; right: 17px;
+    top: 21px; left: 265px; right: 17px;
     height: 37px;
     display: flex; align-items: center;
     padding: 0 12px; gap: 6px;
     z-index: 4;
   }
   .poke-num, .poke-name {
-    font-size: 9px; color: #52525a;
+    font-size: 11px; color: #52525a;
     text-shadow: 1px 1px #a5a5ad;
   }
 
@@ -147,12 +147,13 @@
   .t-dark     { background:#705848; }
   .t-steel    { background:#B8B8D0; color:#333; }
   .t-fairy    { background:#EE99AC; }
+  
   .row-ht, .row-wt {
-    position: absolute; left: 260px; right: 20px;
+    position: absolute; left: 290px; right: 20px;
     height: 22px; display: flex; align-items: center;
-    justify-content: space-between; padding: 0 8px; z-index: 4;
+    justify-content: space-between; padding: 0 4px; z-index: 4;
   }
-  .row-ht { top: 136px; }
+  .row-ht { top: 133px; }
   .row-wt { top: 160px; }
 
   .data-label, .data-value { font-size: 7px; color: #52525a; text-shadow: 1px 1px #a5a5ad; }
@@ -170,14 +171,16 @@
   /* Nav Arrows - Bigger Hitboxes for Touch */
   .nav-prev, .nav-next {
     position: absolute;
-    top: 35%; bottom: 65%;
+    top: 100%; bottom: 0%;
     width: 50px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; color: rgba(255,255,255,0.2);
+    display: flex; align-items: end; justify-content: end;
+    font-size: 50px; color: #000000;
     cursor: pointer; z-index: 10;
+    opacity: 0;
+    margin:0;
   }
-  .nav-prev { left: 0; }
-  .nav-next { right: 0; }
+  .nav-prev { left: 1px; }
+  .nav-next { right: 190px;}
 
   /* ESC button */
   .esc {
